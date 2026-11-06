@@ -22,10 +22,10 @@ public class CartBombClient implements ClientModInitializer {
 
     // Thoi gian theo tick (20 tick = 1 giay)
     private static final int T_PLACE_RAIL = 0;
-    private static final int T_DRAW_BOW   = 1;
-    private static final int T_RELEASE    = 25; // ~1.2 giay keo cung (cung day)
-    private static final int T_MINECART   = 28;
-    private static final int T_FINISH     = 32;
+    private static final int T_MINECART   = 4;   // dat minecart truoc khi ban
+    private static final int T_DRAW_BOW   = 8;   // doi sang cung
+    private static final int T_RELEASE    = 32;  // giu chuot phai ~1.2 giay roi tha
+    private static final int T_FINISH     = 38;
 
     private static KeyMapping triggerKey;
 
@@ -70,23 +70,28 @@ public class CartBombClient implements ClientModInitializer {
             player.swing(InteractionHand.MAIN_HAND);
         }
 
-        if (tick == T_DRAW_BOW) {
-            player.getInventory().setSelectedSlot(bowSlot);
-            mc.options.keyUse.setDown(true);
-            mc.gameMode.useItem(player, InteractionHand.MAIN_HAND);
-        }
-
-        if (tick == T_RELEASE) {
-            mc.options.keyUse.setDown(false);
-            mc.gameMode.releaseUsingItem(player);
-        }
-
         if (tick == T_MINECART) {
             player.getInventory().setSelectedSlot(cartSlot);
             BlockHitResult place = new BlockHitResult(
                     Vec3.atCenterOf(railPos), Direction.UP, railPos, false);
             mc.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, place);
             player.swing(InteractionHand.MAIN_HAND);
+        }
+
+        if (tick == T_DRAW_BOW) {
+            player.getInventory().setSelectedSlot(bowSlot);
+        }
+
+        // Giu chuot phai nhu nguoi choi that: game tu keo cung
+        if (tick > T_DRAW_BOW && tick < T_RELEASE) {
+            mc.options.keyUse.setDown(true);
+        }
+
+        if (tick == T_RELEASE) {
+            mc.options.keyUse.setDown(false);
+            if (player.isUsingItem()) {
+                mc.gameMode.releaseUsingItem(player);
+            }
         }
 
         if (tick >= T_FINISH) {
