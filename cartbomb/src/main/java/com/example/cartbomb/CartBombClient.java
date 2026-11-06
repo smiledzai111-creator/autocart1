@@ -20,12 +20,14 @@ import org.lwjgl.glfw.GLFW;
 
 public class CartBombClient implements ClientModInitializer {
 
-    // Thoi gian theo tick (20 tick = 1 giay)
+    // Thoi gian theo tick (20 tick = 1 giay). Tong chuoi ~18 tick = 0.9 giay
     private static final int T_PLACE_RAIL = 0;
-    private static final int T_MINECART   = 4;
-    private static final int T_DRAW_BOW   = 8;
-    private static final int T_RELEASE    = 32;
-    private static final int T_FINISH     = 38;
+    private static final int T_MINECART   = 2;
+    private static final int T_SELECT_BOW = 3;
+    private static final int T_START_DRAW = 4;   // bat dau keo cung tu tick nay
+    private static final int DRAW_TICKS   = 12;  // keo 12 tick = 0.6 giay roi tha
+    private static final int T_TIMEOUT    = 40;  // du phong: neu khong keo duoc thi tu tha
+    private static final int AFTER_SHOT   = 2;   // so tick sau khi tha thi ket thuc
 
     // Mixin doc bien nay de ep game thay chuot phai dang duoc giu
     public static volatile boolean holdUse = false;
@@ -33,6 +35,8 @@ public class CartBombClient implements ClientModInitializer {
     private static KeyMapping triggerKey;
 
     private boolean running = false;
+    private boolean released = false;
+    private int releaseTick = 0;
     private int tick = 0;
     private int originalSlot, bowSlot, railSlot, cartSlot;
     private BlockPos railPos;
@@ -83,36 +87,33 @@ public class CartBombClient implements ClientModInitializer {
             player.swing(InteractionHand.MAIN_HAND);
         }
 
-        if (tick == T_DRAW_BOW) {
+        if (tick == T_SELECT_BOW) {
             player.getInventory().setSelectedSlot(bowSlot);
         }
 
-        if (tick > T_DRAW_BOW && tick < T_RELEASE) {
-            holdUse = true;
-            if (!player.isUsingItem()) {
-                mc.gameMode.useItem(player, InteractionHand.MAIN_HAND);
-            }
-        }
+        if (tick >= T_START_DRAW && !released) {
+            boolean ready = player.isUsingItem() && player.getTicksUsingItem() >= DRAW_TICKS;
+            boolean timeout = tick >= T_TIMEOUT;
 
-        if (tick == T_RELEASE) {
-            int arrows = 0;
-            for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
-                ItemStack s = player.getInventory().getItem(i);
-                if (s.is(Items.ARROW) || s.is(Items.SPECTRAL_ARROW) || s.is(Items.TIPPED_ARROW)) {
-                    arrows += s.getCount();
+            if (ready || timeout) {
+                player.displayClientMessage(Component.literal(
+                        (ready ? "§a[CartBomb] Ban! " : "§e[CartBomb] Het gio, tha cung. ")
+                        + "(tick keo: " + player.getTicksUsingItem() + ")"), true);
+                holdUse = false;
+                if (player.isUsingItem()) {
+                    mc.gameMode.releaseUsingItem(player);
+                }
+                released = true;
+                releaseTick = tick;
+            } else {
+                holdUse = true;
+                if (!player.isUsingItem()) {
+                    mc.gameMode.useItem(player, InteractionHand.MAIN_HAND);
                 }
             }
-            player.displayClientMessage(Component.literal(
-                    "§e[CartBomb] Dang keo cung: " + player.isUsingItem()
-                    + " | tick keo: " + player.getTicksUsingItem()
-                    + " | mui ten: " + arrows), true);
-            holdUse = false;
-            if (player.isUsingItem()) {
-                mc.gameMode.releaseUsingItem(player);
-            }
         }
 
-        if (tick >= T_FINISH) {
+        if (released && tick >= releaseTick + AFTER_SHOT) {
             holdUse = false;
             player.getInventory().setSelectedSlot(originalSlot);
             running = false;
@@ -150,6 +151,8 @@ public class CartBombClient implements ClientModInitializer {
 
         originalSlot = player.getInventory().getSelectedSlot();
         tick = 0;
+        released = false;
+        releaseTick = 0;
         running = true;
     }
 }
