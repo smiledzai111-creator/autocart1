@@ -25,7 +25,7 @@ public class CartBombClient implements ClientModInitializer {
     private static final int T_MINECART   = 2;
     private static final int T_SELECT_BOW = 3;
     private static final int T_START_DRAW = 4;   // bat dau keo cung tu tick nay
-    private static final int DRAW_TICKS   = 12;  // keo 12 tick = 0.6 giay roi tha
+    private static final int DRAW_TICKS   = 6;  // keo 6 tick = 0.3 giay roi tha
     private static final int T_TIMEOUT    = 40;  // du phong: neu khong keo duoc thi tu tha
     private static final int AFTER_SHOT   = 2;   // so tick sau khi tha thi ket thuc
 
