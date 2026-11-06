@@ -23,9 +23,9 @@ public class CartBombClient implements ClientModInitializer {
     // Thoi gian theo tick (20 tick = 1 giay)
     private static final int T_PLACE_RAIL = 0;
     private static final int T_DRAW_BOW   = 1;
-    private static final int T_RELEASE    = 11; // ~0.5 giay keo cung
-    private static final int T_MINECART   = 16;
-    private static final int T_FINISH     = 20; // tong 1 giay
+    private static final int T_RELEASE    = 25; // ~1.2 giay keo cung (cung day)
+    private static final int T_MINECART   = 28;
+    private static final int T_FINISH     = 32;
 
     private static KeyMapping triggerKey;
 
@@ -72,14 +72,12 @@ public class CartBombClient implements ClientModInitializer {
 
         if (tick == T_DRAW_BOW) {
             player.getInventory().setSelectedSlot(bowSlot);
-            mc.gameMode.useItem(player, InteractionHand.MAIN_HAND);
-        }
-
-        if (tick > T_DRAW_BOW && tick < T_RELEASE && !player.isUsingItem()) {
+            mc.options.keyUse.setDown(true);
             mc.gameMode.useItem(player, InteractionHand.MAIN_HAND);
         }
 
         if (tick == T_RELEASE) {
+            mc.options.keyUse.setDown(false);
             mc.gameMode.releaseUsingItem(player);
         }
 
@@ -92,6 +90,7 @@ public class CartBombClient implements ClientModInitializer {
         }
 
         if (tick >= T_FINISH) {
+            mc.options.keyUse.setDown(false);
             player.getInventory().setSelectedSlot(originalSlot);
             running = false;
             return;
