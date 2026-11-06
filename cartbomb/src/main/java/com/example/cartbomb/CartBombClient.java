@@ -22,10 +22,13 @@ public class CartBombClient implements ClientModInitializer {
 
     // Thoi gian theo tick (20 tick = 1 giay)
     private static final int T_PLACE_RAIL = 0;
-    private static final int T_MINECART   = 4;   // dat minecart truoc khi ban
-    private static final int T_DRAW_BOW   = 8;   // doi sang cung
-    private static final int T_RELEASE    = 32;  // keo cung ~1.2 giay roi tha
+    private static final int T_MINECART   = 4;
+    private static final int T_DRAW_BOW   = 8;
+    private static final int T_RELEASE    = 32;
     private static final int T_FINISH     = 38;
+
+    // Mixin doc bien nay de ep game thay chuot phai dang duoc giu
+    public static volatile boolean holdUse = false;
 
     private static KeyMapping triggerKey;
 
@@ -42,25 +45,19 @@ public class CartBombClient implements ClientModInitializer {
                 GLFW.GLFW_KEY_K,
                 KeyMapping.Category.MISC));
 
-        ClientTickEvents.START_CLIENT_TICK.register(this::onStartTick);
         ClientTickEvents.END_CLIENT_TICK.register(this::onTick);
-    }
-
-    // Giu chuot phai TRUOC khi game xu ly phim, de game khong tu nha cung
-    private void onStartTick(Minecraft mc) {
-        if (running && tick > T_DRAW_BOW && tick < T_RELEASE) {
-            mc.options.keyUse.setDown(true);
-        }
     }
 
     private void onTick(Minecraft mc) {
         LocalPlayer player = mc.player;
         if (player == null || mc.gameMode == null || mc.level == null) {
             running = false;
+            holdUse = false;
             return;
         }
 
         if (!running) {
+            holdUse = false;
             while (triggerKey.consumeClick()) {
                 start(mc, player);
             }
@@ -91,24 +88,32 @@ public class CartBombClient implements ClientModInitializer {
         }
 
         if (tick > T_DRAW_BOW && tick < T_RELEASE) {
-            mc.options.keyUse.setDown(true);
+            holdUse = true;
             if (!player.isUsingItem()) {
                 mc.gameMode.useItem(player, InteractionHand.MAIN_HAND);
             }
         }
 
         if (tick == T_RELEASE) {
+            int arrows = 0;
+            for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+                ItemStack s = player.getInventory().getItem(i);
+                if (s.is(Items.ARROW) || s.is(Items.SPECTRAL_ARROW) || s.is(Items.TIPPED_ARROW)) {
+                    arrows += s.getCount();
+                }
+            }
             player.displayClientMessage(Component.literal(
                     "§e[CartBomb] Dang keo cung: " + player.isUsingItem()
-                    + " | tick keo: " + player.getTicksUsingItem()), true);
-            mc.options.keyUse.setDown(false);
+                    + " | tick keo: " + player.getTicksUsingItem()
+                    + " | mui ten: " + arrows), true);
+            holdUse = false;
             if (player.isUsingItem()) {
                 mc.gameMode.releaseUsingItem(player);
             }
         }
 
         if (tick >= T_FINISH) {
-            mc.options.keyUse.setDown(false);
+            holdUse = false;
             player.getInventory().setSelectedSlot(originalSlot);
             running = false;
             return;
