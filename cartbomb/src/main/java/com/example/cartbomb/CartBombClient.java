@@ -24,7 +24,7 @@ public class CartBombClient implements ClientModInitializer {
     private static final int T_PLACE_RAIL = 0;
     private static final int T_MINECART   = 4;   // dat minecart truoc khi ban
     private static final int T_DRAW_BOW   = 8;   // doi sang cung
-    private static final int T_RELEASE    = 32;  // giu chuot phai ~1.2 giay roi tha
+    private static final int T_RELEASE    = 32;  // keo cung ~1.2 giay roi tha
     private static final int T_FINISH     = 38;
 
     private static KeyMapping triggerKey;
@@ -42,7 +42,15 @@ public class CartBombClient implements ClientModInitializer {
                 GLFW.GLFW_KEY_K,
                 KeyMapping.Category.MISC));
 
+        ClientTickEvents.START_CLIENT_TICK.register(this::onStartTick);
         ClientTickEvents.END_CLIENT_TICK.register(this::onTick);
+    }
+
+    // Giu chuot phai TRUOC khi game xu ly phim, de game khong tu nha cung
+    private void onStartTick(Minecraft mc) {
+        if (running && tick > T_DRAW_BOW && tick < T_RELEASE) {
+            mc.options.keyUse.setDown(true);
+        }
     }
 
     private void onTick(Minecraft mc) {
@@ -82,12 +90,17 @@ public class CartBombClient implements ClientModInitializer {
             player.getInventory().setSelectedSlot(bowSlot);
         }
 
-        // Giu chuot phai nhu nguoi choi that: game tu keo cung
         if (tick > T_DRAW_BOW && tick < T_RELEASE) {
             mc.options.keyUse.setDown(true);
+            if (!player.isUsingItem()) {
+                mc.gameMode.useItem(player, InteractionHand.MAIN_HAND);
+            }
         }
 
         if (tick == T_RELEASE) {
+            player.displayClientMessage(Component.literal(
+                    "§e[CartBomb] Dang keo cung: " + player.isUsingItem()
+                    + " | tick keo: " + player.getTicksUsingItem()), true);
             mc.options.keyUse.setDown(false);
             if (player.isUsingItem()) {
                 mc.gameMode.releaseUsingItem(player);
