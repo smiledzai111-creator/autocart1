@@ -1,1 +1,7 @@
-
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.example.cartbomb.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": ["KeyMappingMixin"]
+}
