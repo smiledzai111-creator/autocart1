@@ -1,11 +1,12 @@
 {
   "schemaVersion": 1,
-  "id": "cartbomb",
+  "id": "fakefps",
   "version": "${version}",
-  "name": "Cart Bomb",
-  "description": "Nhan K: tu dong dat rail, ban cung, dat TNT Minecart de tao vu no.",
-  "authors": ["You"],
+  "name": "FakeFPS",
+  "description": "Mod by HoangTuNoem_.",
+  "authors": ["HoangTuNoem_"],
   "license": "MIT",
+  "icon": "assets/fakefps/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": ["com.example.cartbomb.CartBombClient"]
